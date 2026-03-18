@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { encrypt } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
-const ADMIN_USER = process.env.ADMIN_USER;
-const ADMIN_PASS = process.env.ADMIN_PASS;
+const ADMIN_USER = process.env.ADMIN_USER as string;
+const ADMIN_PASS = process.env.ADMIN_PASS as string;
 
 export async function POST(request: Request) {
   const { username, password } = await request.json();

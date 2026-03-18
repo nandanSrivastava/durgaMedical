@@ -1,10 +1,13 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI: string | undefined = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
+
+// At this point, MONGODB_URI is guaranteed to be a string
+const uri: string = MONGODB_URI;
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
@@ -36,7 +39,7 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
-    cached!.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached!.promise = mongoose.connect(uri, opts).then((mongoose) => {
       return mongoose;
     });
   }
