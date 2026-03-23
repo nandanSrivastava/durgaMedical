@@ -1,10 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Calculator, DollarSign, Package, Pill, Droplets, Syringe, HelpCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Calculator, DollarSign, Package, Pill, Droplets, Syringe, HelpCircle, Save, X } from 'lucide-react';
+
+interface Medicine {
+  _id: string;
+  name: string;
+  mrp: number;
+  purchaseRate: number;
+  type: string;
+}
 
 interface MedicineFormProps {
   onSuccess: () => void;
+  initialData?: Medicine | null;
+  onCancel?: () => void;
 }
 
 const medicineTypes = [
@@ -14,7 +24,7 @@ const medicineTypes = [
   { id: 'other', label: 'Other', icon: HelpCircle, color: 'text-slate-400', bg: 'bg-slate-500/10' },
 ];
 
-export default function MedicineForm({ onSuccess }: MedicineFormProps) {
+export default function MedicineForm({ onSuccess, initialData, onCancel }: MedicineFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     mrp: '',
@@ -24,29 +34,51 @@ export default function MedicineForm({ onSuccess }: MedicineFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const isEditing = !!initialData;
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name,
+        mrp: initialData.mrp.toString(),
+        purchaseRate: initialData.purchaseRate.toString(),
+        type: initialData.type,
+      });
+    } else {
+      setFormData({ name: '', mrp: '', purchaseRate: '', type: 'tablet' });
+    }
+  }, [initialData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const res = await fetch('/api/medicines', {
-        method: 'POST',
+      const url = '/api/medicines';
+      const method = isEditing ? 'PUT' : 'POST';
+      const body = {
+        ...(isEditing ? { _id: initialData._id } : {}),
+        name: formData.name,
+        mrp: parseFloat(formData.mrp),
+        purchaseRate: parseFloat(formData.purchaseRate),
+        type: formData.type,
+      };
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          mrp: parseFloat(formData.mrp),
-          purchaseRate: parseFloat(formData.purchaseRate),
-          type: formData.type,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (res.ok) {
-        setFormData({ name: '', mrp: '', purchaseRate: '', type: 'tablet' });
+        if (!isEditing) {
+          setFormData({ name: '', mrp: '', purchaseRate: '', type: 'tablet' });
+        }
         onSuccess();
       } else {
         const data = await res.json();
-        setError(data.message || 'Failed to add medicine');
+        setError(data.message || `Failed to ${isEditing ? 'update' : 'add'} medicine`);
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -56,15 +88,25 @@ export default function MedicineForm({ onSuccess }: MedicineFormProps) {
   };
 
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="h-12 w-12 bg-blue-500/10 flex items-center justify-center rounded-2xl border border-blue-500/20 text-blue-400">
-          <Plus className="h-6 w-6" />
+    <div className={`bg-slate-900/50 border ${isEditing ? 'border-blue-500/30 ring-1 ring-blue-500/20' : 'border-slate-800'} rounded-3xl p-8 backdrop-blur-xl shadow-2xl transition-all`}>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <div className={`h-12 w-12 ${isEditing ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-500/10 text-blue-400'} flex items-center justify-center rounded-2xl border border-blue-500/20`}>
+            {isEditing ? <Save className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">{isEditing ? 'Edit Medicine' : 'Add New Medicine'}</h2>
+            <p className="text-slate-400 text-sm">{isEditing ? 'Update the details below' : 'Enter the product details below'}</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-white">Add New Medicine</h2>
-          <p className="text-slate-400 text-sm">Enter the product details below</p>
-        </div>
+        {isEditing && onCancel && (
+          <button 
+            onClick={onCancel}
+            className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -154,18 +196,29 @@ export default function MedicineForm({ onSuccess }: MedicineFormProps) {
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {loading ? 'Adding...' : (
-            <>
-              <Plus className="h-5 w-5" />
-              Add Medicine
-            </>
+        <div className="flex gap-4">
+          {isEditing && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all active:scale-[0.98]"
+            >
+              Cancel
+            </button>
           )}
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`${isEditing ? 'flex-[2]' : 'w-full'} py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2`}
+          >
+            {loading ? (isEditing ? 'Updating...' : 'Adding...') : (
+              <>
+                {isEditing ? <Save className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                {isEditing ? 'Update Medicine' : 'Add Medicine'}
+              </>
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );

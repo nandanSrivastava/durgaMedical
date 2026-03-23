@@ -5,10 +5,20 @@ import MedicineForm from '@/components/features/MedicineForm';
 import MedicineList from '@/components/features/MedicineList';
 import { Package, LayoutDashboard, Database, TrendingUp, Loader2 } from 'lucide-react';
 
+interface Medicine {
+  _id: string;
+  name: string;
+  mrp: number;
+  purchaseRate: number;
+  type: string;
+  createdAt: string;
+}
+
 export default function Dashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [totalMedicines, setTotalMedicines] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -31,6 +41,33 @@ export default function Dashboard() {
 
   const handleMedicineAdded = () => {
     setRefreshKey((prev) => prev + 1);
+    setEditingMedicine(null); // Clear editing state after success
+  };
+
+  const handleEdit = (medicine: Medicine) => {
+    setEditingMedicine(medicine);
+    // Scroll to form on mobile
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMedicine(null);
+  };
+
+  const handleDelete = async (medicine: Medicine) => {
+    try {
+      const res = await fetch(`/api/medicines/${medicine._id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        handleMedicineAdded(); // Refresh stats and list
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to delete medicine');
+      }
+    } catch (err) {
+      alert('An error occurred while deleting');
+    }
   };
 
   return (
@@ -89,7 +126,11 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <MedicineForm onSuccess={handleMedicineAdded} />
+            <MedicineForm 
+              onSuccess={handleMedicineAdded} 
+              initialData={editingMedicine}
+              onCancel={handleCancelEdit}
+            />
           </aside>
 
           {/* Right: List & Search */}
@@ -99,7 +140,12 @@ export default function Dashboard() {
               <div className="h-1px flex-grow bg-slate-800" />
             </div>
             
-            <MedicineList refreshKey={refreshKey} onRefresh={handleMedicineAdded} />
+            <MedicineList 
+              refreshKey={refreshKey} 
+              onRefresh={() => setRefreshKey((prev) => prev + 1)} 
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           </section>
         </div>
       </div>

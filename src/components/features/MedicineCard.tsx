@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Package, Percent, Calculator, ChevronDown, ChevronUp, Pill, Droplets, Syringe, HelpCircle } from 'lucide-react';
+import { Package, Percent, Calculator, ChevronDown, ChevronUp, Pill, Droplets, Syringe, HelpCircle, Pencil, Trash2 } from 'lucide-react';
 
 interface Medicine {
   _id: string;
@@ -14,6 +14,8 @@ interface Medicine {
 
 interface MedicineCardProps {
   medicine: Medicine;
+  onEdit?: (medicine: Medicine) => void;
+  onDelete?: (medicine: Medicine) => void;
 }
 
 const typeConfig: Record<string, { icon: any, color: string, bg: string }> = {
@@ -23,7 +25,7 @@ const typeConfig: Record<string, { icon: any, color: string, bg: string }> = {
   other: { icon: HelpCircle, color: 'text-slate-400', bg: 'bg-slate-500/10' },
 };
 
-export default function MedicineCard({ medicine }: MedicineCardProps) {
+export default function MedicineCard({ medicine, onEdit, onDelete }: MedicineCardProps) {
   const [discount, setDiscount] = useState<string>('10');
   const [isExpanded, setIsExpanded] = useState(false);
   const [discountedPrice, setDiscountedPrice] = useState(0);
@@ -48,9 +50,30 @@ export default function MedicineCard({ medicine }: MedicineCardProps) {
     <div className="group bg-slate-900/40 border border-slate-800 hover:border-blue-500/50 rounded-3xl transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 backdrop-blur-sm relative overflow-hidden flex flex-col">
       <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-3xl -z-10 group-hover:bg-blue-600/10 transition-colors" />
       
+      <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
+        <button
+          onClick={() => onEdit?.(medicine)}
+          className="p-2 bg-slate-800/80 hover:bg-blue-600 text-slate-300 hover:text-white rounded-lg border border-slate-700 hover:border-blue-500 transition-all shadow-lg"
+          title="Edit Medicine"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={() => {
+            if (confirm('Are you sure you want to delete this medicine?')) {
+              onDelete?.(medicine);
+            }
+          }}
+          className="p-2 bg-slate-800/80 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg border border-slate-700 hover:border-red-500 transition-all shadow-lg"
+          title="Delete Medicine"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pr-20">
             <div className={`h-10 w-10 ${config.bg} flex items-center justify-center rounded-xl border border-white/5 ${config.color}`}>
               <TypeIcon className="h-5 w-5" />
             </div>

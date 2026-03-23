@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Loader2, PackageX, RefreshCw } from 'lucide-react';
 import MedicineCard from './MedicineCard';
+import Pagination from '../ui/Pagination';
 
 interface Medicine {
   _id: string;
@@ -13,25 +14,56 @@ interface Medicine {
   createdAt: string;
 }
 
+interface PaginationData {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 interface MedicineListProps {
   refreshKey: number;
   onRefresh: () => void;
+  onEdit: (medicine: Medicine) => void;
+  onDelete: (medicine: Medicine) => void;
 }
 
-export default function MedicineList({ refreshKey, onRefresh }: MedicineListProps) {
+export default function MedicineList({ refreshKey, onRefresh, onEdit, onDelete }: MedicineListProps) {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(12);
+  const [pagination, setPagination] = useState<PaginationData | null>(null);
+
+  // Debounce search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // Reset to first page on new search
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const fetchMedicines = useCallback(async () => {
     setLoading(true);
     try {
-      const query = search ? `?search=${encodeURIComponent(search)}` : '';
-      const res = await fetch(`/api/medicines${query}`);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch);
+      }
+      
+      const res = await fetch(`/api/medicines?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setMedicines(data);
+        setMedicines(data.medicines);
+        setPagination(data.pagination);
       } else {
         setError('Failed to fetch medicines');
       }
@@ -40,11 +72,16 @@ export default function MedicineList({ refreshKey, onRefresh }: MedicineListProp
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [debouncedSearch, page, limit]);
 
   useEffect(() => {
     fetchMedicines();
   }, [refreshKey, fetchMedicines]);
+
+  const handleRowsPerPageChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1); // Reset to first page when limit changes
+  };
 
   return (
     <div className="space-y-8">
@@ -91,11 +128,30 @@ export default function MedicineList({ refreshKey, onRefresh }: MedicineListProp
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {medicines.map((medicine) => (
-            <MedicineCard key={medicine._id} medicine={medicine} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {medicines.map((medicine) => (
+              <MedicineCard 
+                key={medicine._id} 
+                medicine={medicine} 
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+
+          {pagination && (
+            <Pagination
+              currentPage={page}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.total}
+              rowsPerPage={limit}
+              onPageChange={setPage}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              loading={loading}
+            />
+          )}
+        </>
       )}
     </div>
   );
