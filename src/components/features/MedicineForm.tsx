@@ -15,6 +15,7 @@ interface MedicineFormProps {
   onSuccess: () => void;
   initialData?: Medicine | null;
   onCancel?: () => void;
+  isModal?: boolean;
 }
 
 const medicineTypes = [
@@ -24,7 +25,7 @@ const medicineTypes = [
   { id: 'other', label: 'Other', icon: HelpCircle, color: 'text-slate-400', bg: 'bg-slate-500/10' },
 ];
 
-export default function MedicineForm({ onSuccess, initialData, onCancel }: MedicineFormProps) {
+export default function MedicineForm({ onSuccess, initialData, onCancel, isModal }: MedicineFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     mrp: '',
@@ -88,21 +89,21 @@ export default function MedicineForm({ onSuccess, initialData, onCancel }: Medic
   };
 
   return (
-    <div className={`bg-slate-900/50 border ${isEditing ? 'border-blue-500/30 ring-1 ring-blue-500/20' : 'border-slate-800'} rounded-3xl p-8 backdrop-blur-xl shadow-2xl transition-all`}>
+    <div className={`${isModal ? 'bg-slate-900 border-none px-6 py-6 sm:p-8' : 'bg-slate-900/50 border border-slate-800 p-8 backdrop-blur-xl shadow-2xl'} ${isEditing ? 'border-blue-500/30 ring-1 ring-blue-500/20' : ''} rounded-3xl transition-all`}>
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <div className={`h-12 w-12 ${isEditing ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-500/10 text-blue-400'} flex items-center justify-center rounded-2xl border border-blue-500/20`}>
-            {isEditing ? <Save className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+          <div className={`h-10 w-10 md:h-12 md:w-12 ${isEditing ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-500/10 text-blue-400'} flex items-center justify-center rounded-xl md:rounded-2xl border border-blue-500/20`}>
+            {isEditing ? <Save className="h-5 w-5 md:h-6 md:w-6" /> : <Plus className="h-5 w-5 md:h-6 md:w-6" />}
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">{isEditing ? 'Edit Medicine' : 'Add New Medicine'}</h2>
-            <p className="text-slate-400 text-sm">{isEditing ? 'Update the details below' : 'Enter the product details below'}</p>
+            <h2 className="text-lg md:text-xl font-bold text-white">{isEditing ? 'Edit Medicine' : 'Add New Medicine'}</h2>
+            <p className="text-slate-400 text-[10px] md:text-sm">{isEditing ? 'Update the details below' : 'Enter the product details below'}</p>
           </div>
         </div>
-        {isEditing && onCancel && (
+        {(isEditing || isModal) && onCancel && (
           <button 
             onClick={onCancel}
-            className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors"
+            className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors border border-slate-800 lg:border-none"
           >
             <X className="h-5 w-5" />
           </button>

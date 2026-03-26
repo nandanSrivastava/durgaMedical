@@ -86,24 +86,24 @@ export default function MedicineList({ refreshKey, onRefresh, onEdit, onDelete }
   return (
     <div className="space-y-8">
       {/* Search Header */}
-      <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-center justify-between">
         <div className="relative w-full md:max-w-md group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
           <input
             type="text"
-            placeholder="Search by medicine name..."
+            placeholder="Search medicines..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-xl"
+            className="w-full pl-12 pr-4 py-3.5 md:py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-xl text-sm md:text-base"
           />
         </div>
         
         <button 
           onClick={onRefresh}
-          className="flex items-center gap-2 px-6 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all group"
+          className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3.5 md:py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all group text-sm md:text-base font-medium"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-          Refresh data
+          <span>Refresh List</span>
         </button>
       </div>
 
