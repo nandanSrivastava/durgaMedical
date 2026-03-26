@@ -53,6 +53,20 @@ export async function POST(request: Request) {
   await dbConnect();
   try {
     const body = await request.json();
+    const { name } = body;
+
+    // Check for existing medicine with the same name (case-insensitive)
+    const existingMedicine = await Medicine.findOne({ 
+      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } 
+    });
+
+    if (existingMedicine) {
+      return NextResponse.json(
+        { message: `A medicine with the name "${name}" already exists.` }, 
+        { status: 400 }
+      );
+    }
+
     // Body now only contains name, mrp, purchaseRate
     const medicine = await Medicine.create(body);
     return NextResponse.json(medicine, { status: 201 });
@@ -70,10 +84,26 @@ export async function PUT(request: Request) {
   await dbConnect();
   try {
     const body = await request.json();
-    const { _id, ...updateData } = body;
+    const { _id, name, ...updateData } = body;
 
     if (!_id) {
       return NextResponse.json({ message: 'Medicine ID is required' }, { status: 400 });
+    }
+
+    // If name is being updated, check for duplicates excluding the current medicine
+    if (name) {
+      const existingMedicine = await Medicine.findOne({
+        _id: { $ne: _id },
+        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
+      });
+
+      if (existingMedicine) {
+        return NextResponse.json(
+          { message: `A medicine with the name "${name}" already exists.` },
+          { status: 400 }
+        );
+      }
+      updateData.name = name;
     }
 
     const medicine = await Medicine.findByIdAndUpdate(_id, updateData, { new: true });
